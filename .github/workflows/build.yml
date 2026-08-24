@@ -1,13 +1,14 @@
-name: Build Windows installer
+name: Build site
 
 on:
   push:
     branches: [main, master]
+  pull_request:
   workflow_dispatch: {}
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -20,15 +21,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build renderer
+      - name: Build
         run: npm run build
 
-      - name: Package Windows installer
-        run: npx electron-builder --win --publish never
-
-      - name: Upload installer
+      - name: Upload site bundle
         uses: actions/upload-artifact@v4
         with:
-          name: Vehicle-Import-Calculator-Setup
-          path: release/*.exe
+          name: bidport-dist
+          path: dist/
           if-no-files-found: error

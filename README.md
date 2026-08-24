@@ -1,152 +1,77 @@
-# Vehicle Import Calculator
+# BidPort - car auction brokerage platform
 
-Desktop app for quoting the landed cost of vehicles imported from US auctions
-(Copart / IAAI) to Klaipėda, Lithuania — with client records, per-car customs
-tax, debt tracking and automatic invoicing.
+A web platform for finding cars at US auctions (Copart / IAAI), checking a
+vehicle's full sale history by VIN, and requesting a brokered import to
+Klaipėda. The look and feel follows the minimalist bid.cars style: navy
+chrome, a single red-orange accent, and dense, honest data cards.
 
-Built with **React + Vite** (renderer) inside **Electron** (desktop shell), and
-packaged to a Windows installer with **electron-builder**.
+**Status: frontend preview.** Every vehicle, price, and stat on the site is
+sample content served by a mock data layer. The live auction API plugs into
+one file when it is ready (see "Connecting the real API" below).
 
----
+## What's on the site
 
-## Prerequisites
+- **Home** - hero VIN/lot/keyword search, archive stats, recently sold grid,
+  browse by make, and the brokerage "how it works" section.
+- **Search** (`/search`) - the archive and live lots with URL-driven filters
+  (status, auction, make, year range, damage, fuel), facet counts, sorting,
+  and pagination. `Auction archive` and `Live auctions` in the nav are this
+  page pre-filtered.
+- **Vehicle detail** (`/vehicle/:id`) - gallery (placeholder until the API
+  delivers lot photos), sale panel with final/current bid and buy-now,
+  full specs, **sale history for the VIN** (every recorded auction
+  appearance with odometer trail and final bids), and similar vehicles.
+- **Talk to a broker** (`/contact`) - quote request form, pre-filled with the
+  VIN when opened from a vehicle page. Not wired to a backend yet.
 
-- **Node.js 18 or newer** (includes npm) — https://nodejs.org
-- To build the Windows installer, run on **Windows** (electron-builder produces
-  the `.exe` for the platform it runs on).
+## Stack
 
-## Install
+React 18 + Vite 5, Tailwind CSS 3, react-router-dom 6,
+Phosphor icons, self-hosted Geist / Geist Mono (no external font CDN).
+Plain JavaScript (JSX), no TypeScript.
+
+## Run it
 
 ```bash
 npm install
+npm run dev        # http://localhost:5173
+npm run build      # production bundle in dist/
+npm run preview    # serve the production build
 ```
 
-## Run in development
-
-Starts Vite with hot-reload and opens the Electron window against it:
-
-```bash
-npm run dev
-```
-
-## Build the Windows installer (the downloadable/installable program)
-
-```bash
-npm run dist
-```
-
-This bundles the app and writes an installer to **`release/`**:
+## Project layout
 
 ```
-release/Vehicle Import Calculator-Setup-1.0.0.exe
+src/
+  api/
+    client.js     the data-access contract every page talks to
+    mockData.js   sample vehicles, stats, makes (delete when API lands)
+  components/     header, footer, cards, badges, filters, skeletons...
+  pages/          Home, Search, Vehicle, Contact, NotFound
+  lib/            formatters, useAsync fetch hook
+tailwind.config.js  design tokens (palette, fonts, radii)
 ```
 
-Double-click that `.exe` to install. It's a standard NSIS installer: it lets the
-user choose the install location and creates a desktop + Start-menu shortcut.
+## Connecting the real API
 
-## Get the `.exe` without installing anything (GitHub builds it for you)
+The UI never touches mock data directly; everything goes through
+`src/api/client.js`:
 
-The repo includes `.github/workflows/build-windows.yml`, so GitHub's free build
-servers can produce the installer:
+- `searchVehicles(params)` - filtered, sorted, paginated search + facet counts
+- `getVehicle(id)` / `getVinHistory(vin)` - one vehicle with its full
+  `records[]` sale history (newest first)
+- `getRecentlySold(limit)`, `getSimilarVehicles(vehicle, limit)`
+- `getStats()`, `getPopularMakes()`
 
-1. Create a free account at https://github.com and click **New repository**
-   (private is fine). Don't add a README — keep it empty.
-2. On the empty repo page, click **“uploading an existing file”**, then drag in
-   **everything inside** the unzipped project folder (including the `.github`
-   folder) and press **Commit changes**.
-3. Open the **Actions** tab — a run named *Build Windows installer* starts
-   automatically (≈5–8 min). If it didn't, select it and press **Run workflow**.
-4. When it turns green, open the run and download the
-   **Vehicle-Import-Calculator-Setup** artifact — a zip containing the `.exe`.
+Replace the bodies of those functions with `fetch` calls that return the same
+shapes (the JSDoc typedefs at the top of the file document them) and delete
+`mockData.js`. Loading, empty, and error states are already handled by every
+page.
 
+Also still open: real lot photos in `VehiclePhoto`, wiring the contact form
+to the broker inbox, and authentication if user accounts are needed.
 
-> Faster smoke-test without building the full installer — produces an unpacked
-> app under `release/win-unpacked/`:
-> ```bash
-> npm run dist:dir
-> ```
+## CI
 
-### App icon (optional)
-
-No custom icon is bundled, so the default Electron icon is used. To brand it, add
-`build/icon.ico` (256×256) and electron-builder will pick it up automatically.
-
----
-
-## Where data is stored
-
-The app persists everything (clients, cars, tax, invoices) as a single JSON file
-in the OS user-data directory, written by the Electron main process:
-
-```
-%APPDATA%\Vehicle Import Calculator\data.json   (Windows)
-```
-
-Deleting that file resets the app.
-
-## First-run sample data
-
-On first launch — when no `data.json` exists yet — the app seeds a few sample
-clients and cars so the screens aren't empty. To ship with an empty database,
-open `src/lib/storage.js` and return an empty structure instead of `SEED`:
-
-```js
-return { clients: [], cars: [], invoiceNext: 1 };
-```
-
----
-
-## Project structure
-
-```
-vehicle-import-calculator/
-├── electron/
-│   ├── main.cjs          Electron main process: window + JSON persistence (IPC)
-│   └── preload.cjs        contextBridge exposing window.appStorage {load, save}
-├── src/
-│   ├── main.jsx           React entry
-│   ├── App.jsx            Header, tab nav, page routing, database wiring
-│   ├── index.css          Tailwind layers + base
-│   ├── theme.js           Design tokens (colors, status tints)
-│   ├── constants.js       Fees, VAT, FX spread, vehicle types, invoice prefix
-│   ├── data/
-│   │   ├── freight.js      Ports + 691 auction yards (parsed from the freight xlsx)
-│   │   └── seed.js         First-run sample clients & cars
-│   ├── lib/
-│   │   ├── format.js       Money/number formatting, ids, invoice numbers
-│   │   ├── pricing.js      VIN validation + landed-cost breakdown
-│   │   ├── clients.js      Client model: draft, validation, display, build
-│   │   ├── tax.js          Customs value, per-car tax total, client debt
-│   │   └── storage.js      Load/save bridge to Electron (seed fallback)
-│   ├── hooks/
-│   │   ├── useDatabase.js   Owns the database + all mutations, auto-persists
-│   │   ├── useSplitPane.js  Draggable resize between calculator panels
-│   │   └── useArmedDelete.js Two-click delete confirmation
-│   └── components/
-│       ├── ui.jsx           Shared primitives (inputs, buttons, tabs)
-│       ├── ClientFields.jsx Private/business client form
-│       ├── CalculatorPage.jsx
-│       ├── ClientsPage.jsx
-│       └── CarsPage.jsx
-├── index.html
-├── vite.config.js
-├── tailwind.config.js
-├── postcss.config.js
-└── package.json           Scripts + electron-builder config
-```
-
-## How the numbers work
-
-- **Total** = winning bid (auction fees already included) + towing to port +
-  ocean freight + customs broker fee + our service fee.
-- The **service fee** is a fixed EUR amount; its USD value floats with the rate.
-- EUR figures use the entered rate **minus a 0.02 spread**.
-- **Duty** (10% cars, 6% motorcycles) and **VAT** (21%) are computed on the
-  **customs value** (bid + freight) and shown as a customs preview — they are
-  **not** part of the total.
-- Marking a car **Paid** issues the next sequential invoice (`BAI00001`, …); the
-  number is assigned once and never reused.
-
-> ⚠️ **Fee values are placeholders.** Verify towing, ocean freight, broker and
-> service fees against your current rates and the Copart/IAAI schedules before
-> quoting real customers.
+`.github/workflows/build.yml` builds the site on every push and uploads the
+`dist/` bundle as an artifact.
