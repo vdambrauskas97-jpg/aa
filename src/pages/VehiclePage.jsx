@@ -12,6 +12,7 @@ import VehiclePhoto from "../components/VehiclePhoto.jsx";
 import VehicleCard, { priceLine } from "../components/VehicleCard.jsx";
 import { CardGridSkeleton } from "../components/Skeletons.jsx";
 import EmptyState from "../components/EmptyState.jsx";
+import { useDocumentTitle } from "../lib/useDocumentTitle.js";
 
 function Gallery({ vehicle }) {
   const title = vehicleTitle(vehicle);
@@ -31,7 +32,7 @@ function Gallery({ vehicle }) {
             seed={`${vehicle.id}-${i}`}
             label={`${title} view ${i + 1}`}
             iconSize={20}
-            className="aspect-[4/3] rounded"
+            className="aspect-[4/3] rounded-lg"
           />
         ))}
       </div>
@@ -244,6 +245,10 @@ export default function VehiclePage() {
   const { id } = useParams();
   const { data: vehicle, loading } = useAsync(() => getVehicle(id), [id]);
 
+  useDocumentTitle(
+    vehicle ? vehicleTitle(vehicle) : loading ? "Loading vehicle" : "Vehicle not found",
+  );
+
   if (loading) {
     return (
       <div className="shell py-8">
@@ -256,6 +261,7 @@ export default function VehiclePage() {
     return (
       <div className="shell py-16">
         <EmptyState
+          headingLevel="h1"
           title="Vehicle not found"
           body="This lot is not in the preview archive. It may appear once the live auction API is connected."
           action={

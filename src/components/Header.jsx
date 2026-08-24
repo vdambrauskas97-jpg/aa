@@ -20,27 +20,16 @@ export function Wordmark({ className = "" }) {
 }
 
 function NavItems({ onNavigate }) {
-  return NAV.map((item) =>
-    item.to.startsWith("/#") ? (
-      <a
-        key={item.to}
-        href={item.to}
-        onClick={onNavigate}
-        className="rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-      >
-        {item.label}
-      </a>
-    ) : (
-      <NavLink
-        key={item.to}
-        to={item.to}
-        onClick={onNavigate}
-        className="rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-      >
-        {item.label}
-      </NavLink>
-    ),
-  );
+  return NAV.map((item) => (
+    <NavLink
+      key={item.to}
+      to={item.to}
+      onClick={onNavigate}
+      className="rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+    >
+      {item.label}
+    </NavLink>
+  ));
 }
 
 export default function Header() {

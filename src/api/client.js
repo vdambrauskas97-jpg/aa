@@ -9,23 +9,39 @@
  * @typedef {Object} SaleRecord
  * @property {"sold"|"live"|"upcoming"} status
  * @property {"copart"|"iaai"} source
- * @property {string} lot
+ * @property {string} lot          digit string, unique per auction appearance
  * @property {string} location
- * @property {string} saleDate    ISO date (yyyy-mm-dd)
- * @property {number} odometer
+ * @property {string} saleDate     ISO date (yyyy-mm-dd)
+ * @property {number} odometer     miles at that appearance
  * @property {string} damagePrimary
  * @property {?string} damageSecondary
- * @property {number} [finalBid]   present when status === "sold"
- * @property {number} [currentBid] present when status !== "sold"
- * @property {?number} [buyNow]
+ * @property {number} [finalBid]   sold records ONLY; never on live/upcoming
+ * @property {number} [currentBid] live/upcoming ONLY; 0 means "no bids yet"
+ * @property {?number} [buyNow]    live/upcoming ONLY; null when not offered
+ *
+ * The live-API mapper must keep those price conventions exactly: omit
+ * finalBid unless sold, use currentBid 0 (not null/absent) for a no-bid
+ * lot, and use buyNow null (not 0) when there is no buy-now offer.
  *
  * @typedef {Object} Vehicle
  * @property {string} id
- * @property {string} vin
+ * @property {string} vin          17 chars, no I/O/Q
  * @property {number} year
  * @property {string} make
  * @property {string} model
  * @property {string} trim
+ * @property {string} bodyStyle
+ * @property {string} fuel
+ * @property {string} engine
+ * @property {string} transmission
+ * @property {string} drive
+ * @property {string} color
+ * @property {boolean} keys
+ * @property {number} odometer     must mirror records[0].odometer
+ * @property {string} odometerBrand  "Actual" | "Not Actual" | "Exempt"
+ * @property {string} titleStatus
+ * @property {number} estRetail
+ * @property {number} photoCount
  * @property {SaleRecord[]} records  newest first; records[0] is the current listing
  */
 
@@ -53,8 +69,26 @@ export function currentRecord(vehicle) {
 function matchesQuery(vehicle, q) {
   const needle = q.trim().toLowerCase();
   if (!needle) return true;
-  if (vehicle.vin.toLowerCase().includes(needle)) return true;
-  if (vehicle.records.some((r) => r.lot.includes(needle))) return true;
+  // Lot/VIN matching needs at least 6 characters, otherwise short digit
+  // fragments (a year, "150") collide with digits inside 8-digit lot
+  // numbers and 17-char VINs. Note filters and facets still apply to the
+  // CURRENT record only, so a query hit on a historical lot can be
+  // filtered out by source/status; record-level filtering is a decision
+  // for the live API.
+  if (/^\d{6,}$/.test(needle)) {
+    return (
+      vehicle.records.some((r) => r.lot.startsWith(needle)) ||
+      vehicle.vin.toLowerCase().includes(needle)
+    );
+  }
+  if (
+    needle.length >= 6 &&
+    /^[a-hj-npr-z0-9]+$/.test(needle) &&
+    /\d/.test(needle) &&
+    vehicle.vin.toLowerCase().includes(needle)
+  ) {
+    return true;
+  }
   const haystack = vehicleTitle(vehicle).toLowerCase();
   return needle.split(/\s+/).every((word) => haystack.includes(word));
 }
@@ -64,15 +98,16 @@ const SORTERS = {
     currentRecord(b).saleDate.localeCompare(currentRecord(a).saleDate),
   "sale-date-asc": (a, b) =>
     currentRecord(a).saleDate.localeCompare(currentRecord(b).saleDate),
-  "price-desc": (a, b) => priceOf(b) - priceOf(a),
-  "price-asc": (a, b) => priceOf(a) - priceOf(b),
+  "price-desc": (a, b) => (priceOf(b) ?? -Infinity) - (priceOf(a) ?? -Infinity),
+  "price-asc": (a, b) => (priceOf(a) ?? Infinity) - (priceOf(b) ?? Infinity),
   "year-desc": (a, b) => b.year - a.year,
   "odometer-asc": (a, b) => a.odometer - b.odometer,
 };
 
+/** The price a listing displays; null when it has none (no bids, no buy-now). */
 function priceOf(vehicle) {
   const rec = currentRecord(vehicle);
-  return rec.finalBid ?? rec.currentBid ?? 0;
+  return rec.finalBid ?? (rec.currentBid > 0 ? rec.currentBid : null) ?? rec.buyNow ?? null;
 }
 
 function countBy(vehicles, getKey) {
@@ -135,7 +170,9 @@ export function searchVehicles(params = {}) {
 
   const filtered = applyAllExcept(null);
   const sorted = [...filtered].sort(SORTERS[sort] ?? SORTERS["sale-date-desc"]);
-  const start = (page - 1) * perPage;
+  const pageCount = Math.max(1, Math.ceil(sorted.length / perPage));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+  const start = (safePage - 1) * perPage;
 
   // Facet counts leave out their own dimension so unchecked options keep
   // honest numbers.
@@ -152,7 +189,7 @@ export function searchVehicles(params = {}) {
   return delay({
     items: sorted.slice(start, start + perPage),
     total: sorted.length,
-    page,
+    page: safePage,
     perPage,
     facets,
   });
@@ -183,6 +220,7 @@ export function getSimilarVehicles(vehicle, limit = 4) {
         (v.bodyStyle === vehicle.bodyStyle ? 2 : 0) +
         (Math.abs(v.year - vehicle.year) <= 2 ? 1 : 0),
     }))
+    .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score);
   return delay(scored.slice(0, limit).map((s) => s.v));
 }

@@ -26,7 +26,7 @@ export default {
         ink: {
           DEFAULT: "#16222F",
           soft: "#5B6B7B",
-          faint: "#8595A5",
+          faint: "#6E7E8E",
         },
         // Semantic
         sold: "#0F7A43",

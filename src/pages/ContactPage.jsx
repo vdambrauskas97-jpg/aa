@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CheckCircle } from "@phosphor-icons/react";
+import { useDocumentTitle } from "../lib/useDocumentTitle.js";
 
 function Field({ id, label, required, error, children, hint }) {
   return (
@@ -10,9 +11,13 @@ function Field({ id, label, required, error, children, hint }) {
         {!required && <span className="ml-1 text-xs text-ink-faint">(optional)</span>}
       </label>
       {children}
-      {hint && !error && <p className="text-xs text-ink-faint">{hint}</p>}
+      {hint && !error && (
+        <p id={`${id}-hint`} className="text-xs text-ink-faint">
+          {hint}
+        </p>
+      )}
       {error && (
-        <p className="text-xs font-medium text-accent-700" role="alert">
+        <p id={`${id}-error`} className="text-xs font-medium text-accent-700" role="alert">
           {error}
         </p>
       )}
@@ -20,19 +25,38 @@ function Field({ id, label, required, error, children, hint }) {
   );
 }
 
-export default function ContactPage() {
-  const [searchParams] = useSearchParams();
-  const ref = searchParams.get("ref") ?? "";
-
-  const [form, setForm] = useState({
+function initialForm(ref) {
+  return {
     name: "",
     email: "",
     phone: "",
     ref,
     message: ref ? `I would like a quote for VIN ${ref}.` : "",
-  });
+  };
+}
+
+export default function ContactPage() {
+  const [searchParams] = useSearchParams();
+  const ref = searchParams.get("ref") ?? "";
+
+  const [form, setForm] = useState(() => initialForm(ref));
   const [errors, setErrors] = useState({});
   const [sent, setSent] = useState(false);
+  const successRef = useRef(null);
+
+  useDocumentTitle("Talk to a broker");
+
+  // Re-seed when the ?ref VIN changes (e.g. header link after a vehicle
+  // page), so a fresh inquiry never silently carries the previous car.
+  useEffect(() => {
+    setForm(initialForm(ref));
+    setErrors({});
+    setSent(false);
+  }, [ref]);
+
+  useEffect(() => {
+    if (sent) successRef.current?.focus();
+  }, [sent]);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -53,15 +77,20 @@ export default function ContactPage() {
   if (sent) {
     return (
       <div className="shell flex justify-center py-20">
-        <div className="max-w-md rounded-lg border border-line bg-white p-8 text-center shadow-card">
+        <div
+          ref={successRef}
+          tabIndex={-1}
+          role="status"
+          className="max-w-md rounded-lg border border-line bg-white p-8 text-center shadow-card focus:outline-none"
+        >
           <CheckCircle size={44} className="mx-auto text-sold" weight="fill" />
           <h1 className="mt-4 text-xl font-bold tracking-tight text-ink">
             Request received
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-ink-soft">
             A broker will get back to you within one business day. In this
-            preview build the form does not send anywhere yet; delivery hooks
-            up together with the auction API.
+            preview build the form does not send anywhere yet; delivery goes
+            live together with the auction API integration.
           </p>
         </div>
       </div>
@@ -93,6 +122,9 @@ export default function ContactPage() {
               className="field"
               value={form.name}
               onChange={set("name")}
+              aria-required="true"
+              aria-invalid={errors.name ? "true" : undefined}
+              aria-describedby={errors.name ? "name-error" : undefined}
             />
           </Field>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -104,6 +136,9 @@ export default function ContactPage() {
                 className="field"
                 value={form.email}
                 onChange={set("email")}
+                aria-required="true"
+                aria-invalid={errors.email ? "true" : undefined}
+                aria-describedby={errors.email ? "email-error" : undefined}
               />
             </Field>
             <Field id="phone" label="Phone" error={errors.phone}>
@@ -129,6 +164,7 @@ export default function ContactPage() {
               className="field font-mono"
               value={form.ref}
               onChange={set("ref")}
+              aria-describedby="ref-hint"
             />
           </Field>
           <Field id="message" label="What do you need?" required error={errors.message}>
@@ -138,6 +174,9 @@ export default function ContactPage() {
               className="field resize-y"
               value={form.message}
               onChange={set("message")}
+              aria-required="true"
+              aria-invalid={errors.message ? "true" : undefined}
+              aria-describedby={errors.message ? "message-error" : undefined}
             />
           </Field>
           <button type="submit" className="btn-accent w-full">

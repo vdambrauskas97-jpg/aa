@@ -9,6 +9,7 @@ import EmptyState from "../components/EmptyState.jsx";
 import { CardGridSkeleton } from "../components/Skeletons.jsx";
 import { searchVehicles } from "../api/client.js";
 import { useAsync } from "../lib/useAsync.js";
+import { useDocumentTitle } from "../lib/useDocumentTitle.js";
 
 const SORT_OPTIONS = [
   { value: "sale-date-desc", label: "Sale date: newest" },
@@ -46,6 +47,8 @@ export default function SearchPage() {
     [searchParams],
   );
 
+  useDocumentTitle(params.q ? `"${params.q}" search` : "Auction vehicles");
+
   function updateParams(patch) {
     const next = new URLSearchParams(searchParams);
     for (const [key, value] of Object.entries(patch)) {
@@ -74,8 +77,8 @@ export default function SearchPage() {
             <h1 className="text-2xl font-bold tracking-tight text-ink">
               Auction vehicles
             </h1>
-            <p className="mt-1 text-sm text-ink-soft">
-              {data
+            <p className="mt-1 text-sm text-ink-soft" aria-live="polite">
+              {!loading && data
                 ? `${data.total} ${data.total === 1 ? "vehicle" : "vehicles"}${params.q ? ` for "${params.q}"` : ""}`
                 : "Searching the archive"}
             </p>
@@ -108,7 +111,8 @@ export default function SearchPage() {
           </div>
         </aside>
 
-        <section aria-label="Search results">
+        <section>
+          <h2 className="sr-only">Search results</h2>
           <div className="mb-4 flex items-center justify-end gap-2">
             <label htmlFor="sort" className="text-sm text-ink-soft">
               Sort by
@@ -136,7 +140,7 @@ export default function SearchPage() {
             />
           )}
 
-          {data && data.items.length === 0 && (
+          {!loading && data && data.items.length === 0 && (
             <EmptyState
               title="No vehicles match"
               body="The preview archive holds a small sample set, so narrow queries can come up empty. Try fewer filters or a broader search."
@@ -150,7 +154,7 @@ export default function SearchPage() {
             />
           )}
 
-          {data && data.items.length > 0 && (
+          {!loading && data && data.items.length > 0 && (
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {data.items.map((vehicle) => (

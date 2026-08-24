@@ -992,7 +992,7 @@ export const VEHICLES = [
     color: "Pure White",
     keys: true,
     odometer: 72110,
-    odometerBrand: "Exempt",
+    odometerBrand: "Actual",
     titleStatus: "Clear (AZ)",
     estRetail: 13500,
     photoCount: 6,

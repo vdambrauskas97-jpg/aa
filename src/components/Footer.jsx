@@ -35,33 +35,22 @@ export default function Footer() {
           <nav key={col.heading} aria-label={col.heading}>
             <h2 className="text-sm font-semibold text-white">{col.heading}</h2>
             <ul className="mt-3 space-y-2">
-              {col.links.map((link) =>
-                link.to.startsWith("/#") ? (
-                  <li key={link.label}>
-                    <a
-                      href={link.to}
-                      className="text-sm text-white/60 transition hover:text-white"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ) : (
-                  <li key={link.label}>
-                    <Link
-                      to={link.to}
-                      className="text-sm text-white/60 transition hover:text-white"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ),
-              )}
+              {col.links.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    to={link.to}
+                    className="text-sm text-white/60 transition hover:text-white"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </nav>
         ))}
       </div>
       <div className="border-t border-white/10">
-        <div className="shell flex flex-col gap-2 py-5 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
+        <div className="shell flex flex-col gap-2 py-5 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 BidPort. All rights reserved.</p>
           <p>
             Vehicle data shown is sample content. Live Copart and IAAI feeds

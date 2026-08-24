@@ -6,6 +6,7 @@ import { CardGridSkeleton } from "../components/Skeletons.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import { getRecentlySold, getStats, getPopularMakes } from "../api/client.js";
 import { useAsync } from "../lib/useAsync.js";
+import { useDocumentTitle } from "../lib/useDocumentTitle.js";
 import { formatCompact, formatNumber } from "../lib/format.js";
 
 const EXAMPLE_VIN = "5YJ3E1EA8NF482915";
@@ -153,7 +154,7 @@ function HowItWorks() {
     <section id="how-it-works" className="border-t border-line bg-white">
       <div className="shell grid gap-10 py-16 lg:grid-cols-2 lg:gap-16">
         <div className="max-w-md">
-          <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-ink [text-wrap:balance] sm:text-3xl">
             From auction lot to your driveway
           </h2>
           <p className="mt-4 leading-relaxed text-ink-soft">
@@ -186,6 +187,7 @@ function HowItWorks() {
 }
 
 export default function HomePage() {
+  useDocumentTitle(null);
   return (
     <>
       <Hero />
