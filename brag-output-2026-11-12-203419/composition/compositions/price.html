@@ -1,0 +1,600 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Geist";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: block;
+      src: url("assets/fonts/Geist-latin-ext.woff2") format("woff2");
+      unicode-range:
+        U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+        U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113,
+        U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: "Geist";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: block;
+      src: url("assets/fonts/Geist-latin.woff2") format("woff2");
+      unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+        U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: var(--color-ground, #fbfcfe);
+      color: var(--color-ink, #14283c);
+      font-family: "Geist", sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+    #p-stage {
+      position: absolute;
+      inset: 0;
+    }
+    /* the hook's dark ground; it floods to the light page when the panel arrives */
+    #p-dark {
+      position: absolute;
+      inset: 0;
+      background: var(--color-dark, #14202e);
+      z-index: 0;
+    }
+
+    /* ---- the lot photo ----
+       Source photo 1280×960; the car's bounding box is x 28–1211, y 186–716, so its centre
+       sits at 48.4% / 47.0% of the photo. The wrapper is sized so that centre lands on the
+       frame's vertical axis (x = 540), and it is clipped to a band around the car for the hook.
+       It then becomes the lot card, clipped to a window centred on the same point. */
+    #p-photo {
+      position: absolute;
+      left: 0;
+      top: 457px;
+      width: 1116px;
+      height: 837px;
+      transform-origin: 0 0;
+      clip-path: inset(73px 0px 124px 0px round 0px);
+      z-index: 1;
+    }
+    #p-photo-in {
+      position: absolute;
+      inset: 0;
+      transform-origin: 48.4% 47%;
+    }
+    #p-photo-in img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* hook wash: the band's top and bottom edges melt into the dark ground; the car stays clear */
+    #p-wash {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(
+        180deg,
+        #14202e 8.7%,
+        #14202ecc 10.2%,
+        #14202e80 12.2%,
+        #14202e33 14.6%,
+        #14202e00 17.5%,
+        #14202e00 76.5%,
+        #14202e33 79.4%,
+        #14202e80 81.7%,
+        #14202ecc 83.7%,
+        #14202e 85.2%
+      );
+    }
+    /* hairline frame for the lot card: the photo's backdrop is almost as light as the page */
+    #p-card-frame {
+      position: absolute;
+      left: 108px;
+      top: 264px;
+      width: 864px;
+      height: 460px;
+      border: 2px solid #e2e9f0;
+      border-radius: 24px;
+      box-shadow: 0 30px 70px -40px rgba(14, 47, 78, 0.45);
+      z-index: 2;
+    }
+
+    /* ---- hook copy ---- */
+    .p-h {
+      position: absolute;
+      left: 108px;
+      z-index: 6;
+      color: #ffffff;
+    }
+    #p-h-tag {
+      top: 254px;
+      padding: 9px 16px 8px;
+      border-radius: 6px;
+      background: #0e2f4e;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      line-height: 1;
+    }
+    /* the lot title: above the car in the hook, then it rides up to head the lot card */
+    #p-title {
+      position: absolute;
+      left: 108px;
+      top: 321px;
+      z-index: 6;
+      transform-origin: 0 0;
+      color: #ffffff;
+      font-size: 62px;
+      font-weight: 900;
+      letter-spacing: -0.012em;
+      line-height: 1.05;
+      white-space: nowrap;
+    }
+    #p-title span,
+    #p-h-q span,
+    #p-claim span {
+      display: inline-block;
+    }
+    #p-h-chips {
+      top: 412px;
+      display: flex;
+      gap: 14px;
+    }
+    .p-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 54px;
+      padding: 0 20px;
+      border-radius: 8px;
+      font-size: 30px;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .p-chip.copart {
+      background: #1b62b5;
+      color: #ffffff;
+    }
+    .p-chip.lot {
+      background: #ffffff;
+      color: #14283c;
+      font-weight: 500;
+    }
+    #p-h-label {
+      top: 1218px;
+      font-size: 40px;
+      font-weight: 500;
+      color: #c9d6ea;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    #p-num {
+      position: absolute;
+      left: 108px;
+      top: 1268px;
+      z-index: 7;
+      transform-origin: 0 0;
+      color: #ffffff;
+      font-size: 146px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    #p-h-q {
+      top: 1436px;
+      font-size: 72px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    #p-h-q .acc {
+      color: #4cc4f5;
+    }
+
+    /* ---- lot card flag (beat 2), on the photo's top-left as on the lot page ---- */
+    #p-card-tag {
+      position: absolute;
+      left: 126px;
+      top: 282px;
+      z-index: 3;
+      padding: 9px 14px 8px;
+      border-radius: 6px;
+      background: #0e2f4e;
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      line-height: 1;
+    }
+
+    /* ---- brand claim (replaces the lot card once the total has landed) ---- */
+    #p-logo {
+      position: absolute;
+      left: 108px;
+      top: 268px;
+      width: 560px;
+      height: auto;
+      z-index: 3;
+      display: block;
+    }
+    #p-claim {
+      position: absolute;
+      left: 108px;
+      top: 420px;
+      width: 864px;
+      z-index: 3;
+      font-size: 70px;
+      font-weight: 900;
+      letter-spacing: -0.015em;
+      line-height: 1.1;
+    }
+    #p-claim .acc {
+      color: var(--color-accent, #0e74c5);
+    }
+
+    /* ---- the "Klaipėdoje" price panel, as on the lot page ---- */
+    #p-panel {
+      position: absolute;
+      left: 108px;
+      top: 750px;
+      width: 864px;
+      z-index: 4;
+      background: #ffffff;
+      border: 2px solid #e2e9f0;
+      border-radius: 24px;
+      box-shadow: 0 30px 70px -40px rgba(14, 47, 78, 0.45);
+    }
+    #p-ph {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 26px 40px 22px;
+      border-bottom: 2px solid #edf2f7;
+    }
+    #p-ph h2 {
+      font-size: 46px;
+      font-weight: 700;
+      line-height: 54px;
+      letter-spacing: -0.01em;
+    }
+    #p-ph .approx {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--color-muted, #5a6e82);
+    }
+    .p-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 62px;
+      padding: 0 40px;
+    }
+    .p-rl {
+      font-size: 33px;
+      font-weight: 400;
+      color: var(--color-muted, #5a6e82);
+      white-space: nowrap;
+    }
+    .p-rv {
+      font-size: 33px;
+      font-weight: 500;
+      color: var(--color-ink, #14283c);
+      white-space: nowrap;
+    }
+    #p-r1 .p-rv {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #p-r1 .box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      width: 190px;
+      height: 48px;
+      padding: 0 14px;
+      border: 2px solid #e2e9f0;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    #p-r1 .cur {
+      font-size: 30px;
+      font-weight: 400;
+      color: var(--color-muted, #5a6e82);
+    }
+    #p-total-wrap {
+      position: relative;
+      margin: 18px 26px 0;
+      height: 150px;
+    }
+    #p-total-glow {
+      position: absolute;
+      left: -30px;
+      right: -30px;
+      top: -26px;
+      bottom: -34px;
+      border-radius: 60px;
+      background: radial-gradient(closest-side, rgba(14, 116, 197, 0.55), rgba(14, 116, 197, 0));
+    }
+    #p-total {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      border-radius: 14px;
+      background: var(--color-navy, #0e2f4e);
+    }
+    #p-total .lbl {
+      font-size: 28px;
+      font-weight: 400;
+      line-height: 1.25;
+      color: #b7cce0;
+    }
+    #p-total-num {
+      display: inline-block;
+      transform-origin: 100% 50%;
+      font-size: 88px;
+      font-weight: 900;
+      letter-spacing: -0.015em;
+      line-height: 1;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+    #p-notes {
+      padding: 16px 40px 22px;
+    }
+    #p-notes p {
+      font-size: 28px;
+      line-height: 36px;
+      color: var(--color-muted, #5a6e82);
+    }
+  </style>
+
+  <div id="root" data-composition-id="price" data-width="1080" data-height="1920">
+    <div id="p-stage">
+      <div id="p-dark" data-layout-ignore></div>
+
+      <!-- lot photo: the car's centre is on the frame's vertical axis in both states -->
+      <div id="p-photo" data-layout-allow-overflow data-layout-ignore>
+        <div id="p-photo-in"><img src="assets/img/lot.jpg" alt="" /></div>
+        <div id="p-wash"></div>
+      </div>
+      <div id="p-card-frame" data-layout-ignore></div>
+
+      <!-- lot card flag (beat 2) -->
+      <div id="p-card-tag">PRIEKIS</div>
+
+      <!-- brand claim (after the total lands) -->
+      <img id="p-logo" src="assets/img/logo-dark.png" alt="easybid" />
+      <div id="p-claim">
+        <span class="p-c-w">Matykite</span> <span class="p-c-w acc">galutinę</span><br />
+        <span class="p-c-w acc">kainą</span> <span class="p-c-w">dar</span>
+        <span class="p-c-w">prieš</span><br />
+        <span class="p-c-w">statydami.</span>
+      </div>
+
+      <!-- the price panel -->
+      <div id="p-panel">
+        <div id="p-ph">
+          <h2>Klaipėdoje</h2>
+          <span class="approx">PRELIMINARU</span>
+        </div>
+        <div class="p-row" id="p-r1">
+          <span class="p-rl">Loto kaina</span>
+          <span class="p-rv"><span class="box">15&nbsp;400</span><span class="cur">USD</span></span>
+        </div>
+        <div class="p-row" id="p-r2">
+          <span class="p-rl">Aukciono mokesčiai</span><span class="p-rv">1&nbsp;405 USD</span>
+        </div>
+        <div class="p-row" id="p-r3">
+          <span class="p-rl">Pervežimas iki JAV uosto</span><span class="p-rv">525 USD</span>
+        </div>
+        <div class="p-row" id="p-r4">
+          <span class="p-rl">Transportavimas į Klaipėdos uostą</span><span class="p-rv">700 USD</span>
+        </div>
+        <div class="p-row" id="p-r5">
+          <span class="p-rl">EasyBid tarpininkavimas</span><span class="p-rv">450 USD</span>
+        </div>
+        <div class="p-row" id="p-r6">
+          <span class="p-rl">Importo muitas</span><span class="p-rv">1&nbsp;848 USD</span>
+        </div>
+        <div class="p-row" id="p-r7">
+          <span class="p-rl">PVM</span><span class="p-rv">4&nbsp;269 USD</span>
+        </div>
+        <div class="p-row" id="p-r8">
+          <span class="p-rl">Krovos darbai Klaipėdoje</span><span class="p-rv">350&nbsp;€</span>
+        </div>
+        <div id="p-total-wrap">
+          <div id="p-total-glow" data-layout-ignore></div>
+          <div id="p-total">
+            <span class="lbl">Preliminari<br />galutinė kaina</span>
+            <span id="p-total-num">0&nbsp;€</span>
+          </div>
+        </div>
+        <div id="p-notes">
+          <p>Skaičiuota pagal esamus tarifus. Galutinės sumos patvirtinamos sąskaitoje.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- hook copy: lot identity above the car, the auction price below it -->
+    <div class="p-h" id="p-h-tag">PRIEKIS</div>
+    <div id="p-title">
+      <span class="p-tw">2017</span> <span class="p-tw">PORSCHE</span>
+      <span class="p-tw">PANAMERA</span>
+    </div>
+    <div class="p-h" id="p-h-chips">
+      <span class="p-chip copart p-h-chip">Copart</span>
+      <span class="p-chip lot p-h-chip">Lotas 68424276</span>
+    </div>
+    <div class="p-h" id="p-h-label">Aukcionas baigėsi · Loto kaina</div>
+    <div id="p-num" data-layout-allow-overflow>15&nbsp;400 USD</div>
+    <div class="p-h" id="p-h-q">
+      <span class="p-h-qw">O</span> <span class="p-h-qw">kiek</span>
+      <span class="p-h-qw acc">Klaipėdoje?</span>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const NBSP = " ";
+      const euro = function (v) {
+        return String(Math.round(Number(v))).replace(/\B(?=(\d{3})+(?!\d))/g, NBSP) + NBSP + "€";
+      };
+
+      /* ---------- Beat 1: the auction price (0 – 2.74 s) ---------- */
+      // a slow pull-back around the car's own centre, so it stays on the frame's axis
+      tl.fromTo("#p-photo-in", { scale: 1.02 }, { scale: 1, duration: 2.5, ease: "none" }, 0);
+      tl.fromTo("#p-h-tag", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, ease: "power3.out" }, 0.06);
+      tl.fromTo(
+        ".p-tw",
+        { opacity: 0, filter: "blur(10px)" },
+        { opacity: 1, filter: "blur(0px)", duration: 0.18, stagger: 0.07, ease: "power2.out" },
+        0.1,
+      );
+      tl.fromTo(
+        ".p-h-chip",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.22, stagger: 0.06, ease: "power3.out" },
+        0.24,
+      );
+      tl.fromTo("#p-h-label", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, 0.24);
+      // the number lands on the first beat (0.54 s)
+      tl.fromTo(
+        "#p-num",
+        { opacity: 0, scale: 1.14, filter: "blur(14px)" },
+        { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.24, ease: "power4.out" },
+        0.3,
+      );
+      tl.fromTo(
+        ".p-h-qw",
+        { opacity: 0, filter: "blur(10px)" },
+        { opacity: 1, filter: "blur(0px)", duration: 0.18, stagger: 0.08, ease: "power2.out" },
+        1.0,
+      );
+      tl.to(
+        ["#p-h-tag", "#p-h-chips", "#p-h-label", "#p-h-q"],
+        { opacity: 0, y: -14, filter: "blur(8px)", duration: 0.2, stagger: 0.02, ease: "power2.in" },
+        2.48,
+      );
+
+      /* ---------- Beat 2: the price in Klaipėda (2.74 – 9.81 s) ---------- */
+      // the ground floods to the light page while the photo band shrinks into the lot card;
+      // the card's window (864×460 at 108,264) is centred on the car's centre
+      tl.to("#p-dark", { opacity: 0, duration: 0.42, ease: "power2.inOut" }, 2.5);
+      tl.fromTo(
+        "#p-photo",
+        { x: 0, y: 0, scale: 1, clipPath: "inset(73px 0px 124px 0px round 0px)" },
+        {
+          x: 107.4,
+          y: -278,
+          scale: 0.80108,
+          clipPath: "inset(106.1px 36.7px 156.7px 0.8px round 30px)",
+          duration: 0.55,
+          ease: "power3.inOut",
+          immediateRender: false,
+        },
+        2.5,
+      );
+      tl.to("#p-wash", { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 2.5);
+      tl.fromTo("#p-card-frame", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, 2.95);
+      // the lot title stays: it rides up to head the card and turns to ink as the ground turns light
+      tl.to("#p-title", { y: -127, scale: 0.742, duration: 0.55, ease: "power3.inOut" }, 2.5);
+      tl.to("#p-title", { color: "#14283c", duration: 0.3, ease: "power1.inOut" }, 2.6);
+      // the auction price carries across into the panel's first row
+      tl.to("#p-num", { x: 622, y: -397.5, scale: 0.226, duration: 0.62, ease: "power3.inOut" }, 2.58);
+      tl.to("#p-num", { color: "#14283c", duration: 0.3, ease: "power1.inOut" }, 2.62);
+      tl.to("#p-num", { opacity: 0, duration: 0.13, ease: "power1.in" }, 3.07);
+
+      // the panel rises once the photo has cleared its top edge
+      tl.fromTo("#p-panel", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.38, ease: "expo.out" }, 2.82);
+      tl.fromTo("#p-r1 .p-rl", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, 3.0);
+      tl.fromTo("#p-r1 .p-rv", { opacity: 0 }, { opacity: 1, duration: 0.14, ease: "power1.out" }, 3.09);
+
+      tl.fromTo("#p-card-tag", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, 3.05);
+
+      // beat-grid: fee rows at 3.55, 3.82, 4.10, 4.37, 4.64, 4.92, 5.19s (half beats), then the full set holds
+      for (let k = 2; k <= 8; k++) {
+        tl.fromTo(
+          "#p-r" + k,
+          { opacity: 0, x: -22, filter: "blur(6px)" },
+          { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.24, ease: "power3.out" },
+          3.55 + (k - 2) * 0.273,
+        );
+      }
+      tl.fromTo("#p-notes", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, 5.3);
+
+      // the total: bar in, count-up, landing exactly on the music's lift
+      // beat-locked: 7.07s
+      tl.fromTo(
+        "#p-total",
+        { opacity: 0, y: 18, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.32, ease: "expo.out" },
+        5.44,
+      );
+      tl.fromTo(
+        "#p-total-num",
+        { textContent: 0 },
+        {
+          textContent: 22769,
+          duration: 1.45,
+          ease: "power2.out",
+          snap: { textContent: 1 },
+          modifiers: { textContent: euro },
+        },
+        5.62,
+      );
+      tl.fromTo(
+        "#p-total-num",
+        { scale: 1.1 },
+        { scale: 1, duration: 0.45, ease: "expo.out", immediateRender: false },
+        7.07,
+      );
+
+      // audio-reactive: the glow behind the total breathes with the bed's bass (build-time data)
+      const GLOW = [0.0, 0.41, 0.7, 0.45, 0.42, 0.45, 0.44, 0.47, 0.48, 0.52, 0.72, 0.46, 0.4, 0.43, 0.35, 0.41, 0.34, 0.44, 0.91, 0.58, 0.37, 0.39, 0.34, 0.44, 0.41, 0.4, 0.8, 0.52, 0.33, 0.29, 0.3, 0.4, 0.35, 0.41, 0.76, 0.64, 0.41, 0.41, 0.36, 0.43, 0.39];
+      tl.fromTo("#p-total-glow", { opacity: 0, scale: 0.96 }, { opacity: 0, scale: 0.96, duration: 0.01 }, 0);
+      GLOW.forEach(function (v, i) {
+        tl.to(
+          "#p-total-glow",
+          { opacity: 0.2 + 0.6 * v, scale: 0.98 + 0.06 * v, duration: 1 / 15, ease: "none" },
+          7.03 + i / 15,
+        );
+      });
+
+      // the lot card makes room for the claim
+      tl.to(
+        ["#p-photo", "#p-card-frame", "#p-card-tag", "#p-title"],
+        { opacity: 0, filter: "blur(8px)", duration: 0.18, ease: "power2.in" },
+        7.15,
+      );
+      tl.fromTo(
+        "#p-logo",
+        { opacity: 0, y: 14, filter: "blur(10px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.3, ease: "expo.out" },
+        7.28,
+      );
+      tl.fromTo(
+        ".p-c-w",
+        { opacity: 0, filter: "blur(8px)" },
+        { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.06, ease: "power2.out" },
+        7.43,
+      );
+
+      // leave upward; the next scene arrives from below on the same ground
+      tl.to("#p-stage", { y: -90, opacity: 0, filter: "blur(10px)", duration: 0.2, ease: "power3.in" }, 9.59);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["price"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,215 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Geist";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: block;
+      src: url("assets/fonts/Geist-latin-ext.woff2") format("woff2");
+      unicode-range:
+        U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+        U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113,
+        U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: "Geist";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: block;
+      src: url("assets/fonts/Geist-latin.woff2") format("woff2");
+      unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+        U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      color: #ffffff;
+      font-family: "Geist", sans-serif;
+    }
+    /* everything sits inside the iris that opens from the pin in Klaipėda */
+    #o-iris {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: var(--color-dark, #14202e);
+      clip-path: circle(0px at 851px 954px);
+    }
+    /* the site's hero photo as a band across the top, fading into the dark ground */
+    #o-band {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1080px;
+      height: 790px;
+      overflow: hidden;
+    }
+    /* hero photo 1920×1080; its car spans x 26.2–75.0%, y 42.4–83.3%. Placed at 1680×945 so the
+       car's centre sits on the frame's vertical axis (x = 540); the slow push-in turns around it. */
+    #o-photo {
+      position: absolute;
+      inset: 0;
+      transform-origin: 540px 438px;
+    }
+    #o-photo img {
+      position: absolute;
+      left: -310px;
+      top: -155px;
+      width: 1680px;
+      height: 945px;
+      display: block;
+    }
+    #o-wash {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1080px;
+      height: 792px;
+      background-image: linear-gradient(
+        180deg,
+        #0d1828b3 0%,
+        #0d182840 26%,
+        #0d182800 46%,
+        #14202e80 76%,
+        #14202e 98%
+      );
+    }
+    #o-glow {
+      position: absolute;
+      left: 10px;
+      top: 742px;
+      width: 860px;
+      height: 330px;
+      background: radial-gradient(closest-side, rgba(0, 174, 239, 0.36), rgba(0, 174, 239, 0));
+    }
+    #o-logo {
+      position: absolute;
+      left: 108px;
+      top: 850px;
+      width: 600px;
+      height: auto;
+      display: block;
+    }
+    #o-h1 {
+      position: absolute;
+      left: 108px;
+      top: 1006px;
+      width: 864px;
+      font-size: 96px;
+      font-weight: 900;
+      letter-spacing: -0.015em;
+      line-height: 1.04;
+      text-transform: uppercase;
+    }
+    #o-h1 span {
+      display: inline-block;
+    }
+    #o-row {
+      position: absolute;
+      left: 108px;
+      top: 1366px;
+      display: flex;
+      align-items: center;
+      gap: 38px;
+    }
+    #o-cta {
+      height: 112px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 50px;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #0b2668;
+      font-size: 44px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    #o-url {
+      font-size: 50px;
+      font-weight: 700;
+      letter-spacing: -0.005em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+  </style>
+
+  <div id="root" data-composition-id="outro" data-width="1080" data-height="1920">
+    <div id="o-iris">
+      <div id="o-band" data-layout-ignore>
+        <div id="o-photo" data-layout-allow-overflow><img src="assets/img/hero.jpg" alt="" /></div>
+      </div>
+      <div id="o-wash" data-layout-ignore></div>
+      <div id="o-glow" data-layout-ignore></div>
+
+      <img id="o-logo" src="assets/img/logo-light.png" alt="easybid" />
+      <h1 id="o-h1">
+        <span class="o-w">JAV</span> <span class="o-w">aukcionų</span><br />
+        <span class="o-w">automobiliai</span><br />
+        <span class="o-w">iki</span> <span class="o-w">Klaipėdos</span>
+      </h1>
+      <div id="o-row">
+        <div id="o-cta">Pradėti statyti</div>
+        <div id="o-url" data-hold>easybid.lt</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Local time 0 = 18.54 s in the film.
+
+      // the iris opens from the pin's tip onto the site's hero
+      tl.fromTo(
+        "#o-iris",
+        { clipPath: "circle(0px at 851px 954px)" },
+        { clipPath: "circle(1500px at 851px 954px)", duration: 0.42, ease: "power2.inOut" },
+        0,
+      );
+      tl.fromTo("#o-photo", { scale: 1 }, { scale: 1.05, duration: 3.46, ease: "none" }, 0);
+
+      // beat-locked: 18.80s (logo on the kick)
+      tl.fromTo(
+        "#o-logo",
+        { opacity: 0, y: 14, filter: "blur(12px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.3, ease: "expo.out" },
+        0.16,
+      );
+      tl.fromTo(
+        ".o-w",
+        { opacity: 0, filter: "blur(10px)" },
+        { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.06, ease: "power2.out" },
+        0.5,
+      );
+      tl.fromTo(
+        "#o-cta",
+        { opacity: 0, scale: 0.92 },
+        { opacity: 1, scale: 1, duration: 0.22, ease: "back.out(1.4)" },
+        1.08,
+      );
+      tl.fromTo(
+        "#o-url",
+        { opacity: 0, x: -14, filter: "blur(8px)" },
+        { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.22, ease: "power3.out" },
+        1.14,
+      );
+
+      // audio-reactive: the glow behind the logo breathes with the bed's bass (build-time data)
+      const GLOW = [0.78, 0.5, 0.32, 0.54, 0.71, 0.8, 0.81, 1.0, 0.64, 0.65, 0.42, 0.27, 0.59, 0.69, 0.78, 0.64, 0.79, 0.51, 0.59, 0.67, 0.77, 0.76, 0.71, 0.59, 0.96, 0.62, 0.64, 0.72, 0.46, 0.29, 0.19, 0.12, 0.91, 0.58, 0.37, 0.24, 0.2, 0.21, 0.14, 0.09, 0.81, 0.79, 0.5, 0.32, 0.42, 0.51, 0.49, 0.6, 0.69, 0.65, 0.42];
+      tl.fromTo("#o-glow", { opacity: 0, scale: 0.96 }, { opacity: 0, scale: 0.96, duration: 0.01 }, 0);
+      GLOW.forEach(function (v, i) {
+        tl.to(
+          "#o-glow",
+          { opacity: 0.25 + 0.6 * v, scale: 0.97 + 0.07 * v, duration: 1 / 15, ease: "none" },
+          0.06 + i / 15,
+        );
+      });
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["outro"] = tl;
+    })();
+  </script>
+</template>
