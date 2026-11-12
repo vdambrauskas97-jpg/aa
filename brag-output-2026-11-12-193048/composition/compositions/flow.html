@@ -1,0 +1,499 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Geist";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: block;
+      src: url("assets/fonts/Geist-latin-ext.woff2") format("woff2");
+      unicode-range:
+        U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+        U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113,
+        U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: "Geist";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: block;
+      src: url("assets/fonts/Geist-latin.woff2") format("woff2");
+      unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+        U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: var(--color-ground, #fbfcfe);
+      color: var(--color-ink, #14283c);
+      font-family: "Geist", sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+    #f-stage {
+      position: absolute;
+      left: 0;
+      top: 110px;
+      width: 1080px;
+      height: 1810px;
+    }
+
+    /* ---- captions (top) ---- */
+    #f-chip {
+      position: absolute;
+      left: 108px;
+      top: 236px;
+      display: inline-flex;
+      align-items: center;
+      height: 66px;
+      padding: 0 28px;
+      border-radius: 999px;
+      background: #eaf3fc;
+      border: 2px solid #d5e8f8;
+      color: #0f5fa0;
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .f-cap {
+      position: absolute;
+      left: 108px;
+      width: 864px;
+      font-size: 88px;
+      font-weight: 900;
+      letter-spacing: -0.018em;
+      line-height: 1.05;
+    }
+    .f-cap span {
+      display: inline-block;
+    }
+    #f-cap1 {
+      top: 332px;
+    }
+    #f-cap2 {
+      top: 236px;
+    }
+
+    /* ---- search demo, as on the site's "Kaip tai veikia" page ---- */
+    #f-sbar {
+      position: absolute;
+      left: 108px;
+      top: 600px;
+      width: 864px;
+      height: 112px;
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      padding: 0 34px;
+      background: #ffffff;
+      border: 2px solid #e2e9f0;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px -34px rgba(14, 47, 78, 0.4);
+    }
+    #f-sbar svg {
+      width: 48px;
+      height: 48px;
+      flex: none;
+      fill: none;
+      stroke: #5a6e82;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+    }
+    #f-query {
+      font-size: 50px;
+      font-weight: 400;
+      line-height: 1;
+      white-space: pre;
+    }
+    .f-row {
+      position: absolute;
+      left: 108px;
+      width: 864px;
+      height: 174px;
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      padding: 0 32px;
+      background: #ffffff;
+      border: 2px solid #e2e9f0;
+      border-radius: 20px;
+    }
+    #f-row1 {
+      top: 740px;
+    }
+    #f-row2 {
+      top: 934px;
+    }
+    #f-row3 {
+      top: 1128px;
+    }
+    #f-ring {
+      position: absolute;
+      left: 100px;
+      top: 926px;
+      width: 880px;
+      height: 190px;
+      border: 5px solid #8fc3ee;
+      border-radius: 27px;
+      box-shadow: 0 0 0 7px rgba(14, 116, 197, 0.14);
+    }
+    .f-thumb {
+      flex: none;
+      width: 150px;
+      height: 100px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #dce9f4;
+    }
+    .f-thumb svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .f-rt {
+      flex: 1;
+      min-width: 0;
+    }
+    .f-l1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 54px;
+    }
+    .f-l1 b {
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .f-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 48px;
+      padding: 0 22px;
+      border-radius: 999px;
+      background: #eaf3fc;
+      color: #0f5fa0;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .f-l2 {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: 29px;
+      line-height: 40px;
+      color: var(--color-muted, #5a6e82);
+    }
+    .f-cell {
+      display: block;
+      white-space: nowrap;
+      transform-origin: 0% 50%;
+    }
+    .f-cell b {
+      font-weight: 700;
+      color: var(--color-ink, #14283c);
+    }
+    .f-sep {
+      flex: none;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #9db0c2;
+    }
+
+    /* ---- bid demo ---- */
+    #f-bid {
+      position: absolute;
+      left: 108px;
+      top: 580px;
+      width: 864px;
+      height: 640px;
+      transform-origin: 50% 0%;
+      background: #ffffff;
+      border: 2px solid #e2e9f0;
+      border-radius: 24px;
+      box-shadow: 0 30px 70px -40px rgba(14, 47, 78, 0.45);
+    }
+    #f-bid-in {
+      position: absolute;
+      inset: 0;
+      text-align: center;
+    }
+    #f-bid-title {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      top: 70px;
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+    #f-bid-max {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      top: 158px;
+      font-size: 40px;
+      line-height: 1.2;
+      color: var(--color-muted, #5a6e82);
+      white-space: nowrap;
+    }
+    #f-bid-max b {
+      font-weight: 700;
+      color: var(--color-ink, #14283c);
+    }
+    #f-bid-label {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      top: 280px;
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      color: var(--color-muted, #5a6e82);
+    }
+    #f-bid-stack {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      top: 340px;
+      height: 210px;
+      overflow: hidden;
+    }
+    .f-pv {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 12px;
+      font-size: 180px;
+      font-weight: 900;
+      letter-spacing: -0.025em;
+      line-height: 186px;
+      white-space: nowrap;
+    }
+    #f-won {
+      position: absolute;
+      left: 108px;
+      top: 1250px;
+      width: 864px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 20px;
+      background: #1f6b3f;
+      color: #ffffff;
+      font-size: 50px;
+      font-weight: 800;
+      letter-spacing: -0.005em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+  </style>
+
+  <div id="root" data-composition-id="flow" data-width="1080" data-height="1920">
+    <div id="f-stage">
+      <!-- captions -->
+      <div id="f-chip">683&nbsp;337 lotų</div>
+      <div class="f-cap" id="f-cap1">
+        <span class="f-c1w">Copart</span> <span class="f-c1w">ir</span>
+        <span class="f-c1w">IAAI</span><br />
+        <span class="f-c1w">viename</span> <span class="f-c1w">sąraše</span>
+      </div>
+      <div class="f-cap" id="f-cap2">
+        <span class="f-c2w">Niekada</span> <span class="f-c2w">nė</span><br />
+        <span class="f-c2w">centu</span> <span class="f-c2w">daugiau,</span><br />
+        <span class="f-c2w">nei</span> <span class="f-c2w">nurodėte</span>
+      </div>
+
+      <!-- search -->
+      <div id="f-sbar">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10" cy="10" r="6.5"></circle>
+          <path d="m15 15 6 6"></path>
+        </svg>
+        <div id="f-query"><span class="f-k">b</span><span class="f-k">m</span><span class="f-k">w</span><span class="f-k"> </span><span class="f-k">m</span><span class="f-k">5</span></div>
+      </div>
+
+      <div class="f-row" id="f-row1">
+        <div class="f-thumb">
+          <svg viewBox="0 0 320 240" aria-hidden="true">
+            <rect width="320" height="240" fill="#DCE9F4"></rect>
+            <g fill="none" stroke="rgba(14,47,78,.35)" stroke-width="8">
+              <path d="M46 158h228v-30l-38-20c-14-22-32-30-58-30h-58c-24 0-40 10-65 30l-18 20z"></path>
+            </g>
+          </svg>
+        </div>
+        <div class="f-rt">
+          <div class="f-l1"><b>2013 BMW M5</b><span class="f-tag">Copart</span></div>
+          <div class="f-l2">
+            <span class="f-cell">Statymas <b>$9,100</b></span><span class="f-sep"></span>
+            <span class="f-cell">Su pristatymu <b>$15,400</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="f-ring" data-layout-ignore></div>
+      <div class="f-row" id="f-row2">
+        <div class="f-thumb">
+          <svg viewBox="0 0 320 240" aria-hidden="true">
+            <rect width="320" height="240" fill="#DCE9F4"></rect>
+            <g fill="none" stroke="rgba(14,47,78,.35)" stroke-width="8">
+              <path d="M46 158h228v-30l-38-20c-14-22-32-30-58-30h-58c-24 0-40 10-65 30l-18 20z"></path>
+            </g>
+          </svg>
+        </div>
+        <div class="f-rt">
+          <div class="f-l1"><b>2019 BMW M5</b><span class="f-tag">IAAI</span></div>
+          <div class="f-l2">
+            <span class="f-cell">Statymas <b>$21,300</b></span><span class="f-sep"></span>
+            <span class="f-cell" id="f-deliv">Su pristatymu <b id="f-deliv-v">$33,400</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="f-row" id="f-row3">
+        <div class="f-thumb">
+          <svg viewBox="0 0 320 240" aria-hidden="true">
+            <rect width="320" height="240" fill="#DCE9F4"></rect>
+            <g fill="none" stroke="rgba(14,47,78,.35)" stroke-width="8">
+              <path d="M46 158h228v-30l-38-20c-14-22-32-30-58-30h-58c-24 0-40 10-65 30l-18 20z"></path>
+            </g>
+          </svg>
+        </div>
+        <div class="f-rt">
+          <div class="f-l1"><b>2021 BMW M5</b><span class="f-tag">Copart</span></div>
+          <div class="f-l2">
+            <span class="f-cell">Statymas <b>$34,900</b></span><span class="f-sep"></span>
+            <span class="f-cell">Su pristatymu <b>$51,200</b></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- bid -->
+      <div id="f-bid">
+        <div id="f-bid-in">
+          <div id="f-bid-title">2019 BMW M5 · Lotas 0-44873101</div>
+          <div id="f-bid-max">Jūsų maksimali suma <b>$22,000</b></div>
+          <div id="f-bid-label">STATYMAS</div>
+          <div id="f-bid-stack">
+            <div class="f-pv" id="f-pv1">$21,300</div>
+            <div class="f-pv" id="f-pv2" data-layout-allow-overlap>$21,600</div>
+            <div class="f-pv" id="f-pv3" data-layout-allow-overlap>$21,900</div>
+          </div>
+        </div>
+      </div>
+      <div id="f-won">Lotas laimėtas už $21,900</div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Local time 0 = 9.81 s in the film.
+
+      /* ---------- Find: one search (0 – 2.7 s) ---------- */
+      tl.fromTo("#f-sbar", { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "none" }, 0);
+      tl.fromTo(
+        "#f-sbar",
+        { y: 90, filter: "blur(12px)" },
+        { y: 0, filter: "blur(0px)", duration: 0.3, ease: "power3.out" },
+        0,
+      );
+      tl.fromTo("#f-chip", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.2, ease: "power3.out" }, 0.03);
+      tl.fromTo(
+        ".f-c1w",
+        { opacity: 0, filter: "blur(10px)" },
+        { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.07, ease: "power2.out" },
+        0.1,
+      );
+      // typing "bmw m5", one key every 0.07 s
+      const keys = [0.22, 0.29, 0.36, 0.44, 0.51, 0.58];
+      gsap.utils.toArray(".f-k").forEach(function (el, i) {
+        tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.02, ease: "none" }, keys[i]);
+      });
+      // beat-grid: result rows at 10.47, 10.69, 10.91s; the highlight is beat-locked to the kick at 11.30s
+      [
+        ["#f-row1", 0.66],
+        ["#f-row2", 0.88],
+        ["#f-row3", 1.1],
+      ].forEach(function (r) {
+        tl.fromTo(
+          r[0],
+          { opacity: 0, y: 34 },
+          { opacity: 1, y: 0, duration: 0.28, ease: "power3.out" },
+          r[1],
+        );
+      });
+      // the site's highlight ring on the middle row; its delivered price takes the accent
+      tl.fromTo(
+        "#f-ring",
+        { opacity: 0, scale: 1.03 },
+        { opacity: 1, scale: 1, duration: 0.22, ease: "power3.out" },
+        1.49,
+      );
+      tl.to("#f-deliv-v", { color: "#0e74c5", duration: 0.12, ease: "none" }, 1.49);
+      tl.fromTo(
+        "#f-deliv",
+        { scale: 1 },
+        { scale: 1.07, duration: 0.14, ease: "power2.out", immediateRender: false },
+        1.49,
+      );
+      tl.to("#f-deliv", { scale: 1, duration: 0.3, ease: "power2.inOut" }, 1.63);
+
+      // search leaves; the picked row becomes the bid card for the same car
+      tl.to(
+        ["#f-sbar", "#f-row1", "#f-row3"],
+        { opacity: 0, y: -18, filter: "blur(8px)", duration: 0.2, stagger: 0.02, ease: "power2.in" },
+        2.72,
+      );
+      tl.to(["#f-chip", "#f-cap1"], { opacity: 0, filter: "blur(8px)", duration: 0.18, ease: "power2.in" }, 2.7);
+      tl.to(["#f-row2", "#f-ring"], { opacity: 0, duration: 0.14, ease: "power1.in" }, 2.84);
+
+      /* ---------- Bid: never above your maximum (2.78 – 6.01 s) ---------- */
+      tl.fromTo("#f-bid", { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "none" }, 2.78);
+      tl.fromTo(
+        "#f-bid",
+        { y: 354, scaleY: 0.272 },
+        { y: 0, scaleY: 1, duration: 0.38, ease: "power3.out" },
+        2.78,
+      );
+      tl.fromTo("#f-bid-in", { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power1.out" }, 2.88);
+      tl.fromTo(
+        ".f-c2w",
+        { opacity: 0, filter: "blur(10px)" },
+        { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.06, ease: "power2.out" },
+        3.08,
+      );
+      // the bid ticks up (13.50 s and 13.95 s in the film)
+      tl.fromTo("#f-pv2", { opacity: 0, y: 80 }, { opacity: 0, y: 80, duration: 0.01 }, 0);
+      tl.fromTo("#f-pv3", { opacity: 0, y: 80 }, { opacity: 0, y: 80, duration: 0.01 }, 0);
+      tl.to("#f-pv1", { opacity: 0, y: -80, duration: 0.16, ease: "power2.in" }, 3.67);
+      tl.to("#f-pv2", { opacity: 1, y: 0, duration: 0.2, ease: "power3.out" }, 3.7);
+      tl.to("#f-pv2", { opacity: 0, y: -80, duration: 0.16, ease: "power2.in" }, 4.12);
+      tl.to("#f-pv3", { opacity: 1, y: 0, duration: 0.2, ease: "power3.out" }, 4.15);
+      // beat-locked: 14.17s (win banner on the kick)
+      tl.fromTo(
+        "#f-won",
+        { opacity: 0, y: 34, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.26, ease: "expo.out" },
+        4.36,
+      );
+
+      // leave upward at speed; the delivery scene arrives from below on the strong cue
+      tl.to("#f-stage", { y: -160, opacity: 0, filter: "blur(10px)", duration: 0.18, ease: "power3.in" }, 5.83);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["flow"] = tl;
+    })();
+  </script>
+</template>
